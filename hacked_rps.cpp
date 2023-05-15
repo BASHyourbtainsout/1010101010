@@ -14,7 +14,7 @@ int main() {
         cin >> playerChoice;
 
         // Check if the player's choice is valid
-        if (playerChoice != 'R' && playerChoice != 'P' && playerChoice != 'S'&& playerChoice !='g') {
+        if (playerChoice != 'R' && playerChoice != 'P' && playerChoice != 'S' && playerChoice !='g') {
             cout << "Invalid choice. Try again." << endl;
             continue;
         }
