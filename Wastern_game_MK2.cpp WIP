@@ -20,7 +20,7 @@ int main() {
         cout << endl;
         
         // computer chooses randomly between shield and shoot
-        int computer_choice = rand() % 2 + 1 + 3; // 2=shield, 3=shoot
+        int computer_choice = rand() % 2 + 1 + 3; // 2=shield, 3=shoot 1=reload
         if (ammo>0) {} 
         if (choice == 1) { // reload
             ammo++;
