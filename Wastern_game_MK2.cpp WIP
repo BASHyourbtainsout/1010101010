@@ -25,7 +25,7 @@ int main() {
         if (choice == 1) { // reload
             ammo++;
             reloads++;
-            if (reloads >= 10) { // acquire bazooka after 10 reloads
+            if (reloads >= 7) { // acquire bazooka after 10 reloads
                 bazooka = 1;
                 cout << "You acquired a bazooka!" << endl;
             }
