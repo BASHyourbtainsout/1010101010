@@ -1,3 +1,3 @@
 # Test games
-A small amount of game code by a small coder, working to become more advanced (Note, this is AI assited so I cannot take all credit, but it is still mostly my code)
+A small amount of game code by a small coder, working to become more advanced
 Intended to run in replit
