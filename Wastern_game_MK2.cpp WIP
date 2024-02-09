@@ -4,75 +4,217 @@
 
 using namespace std;
 
+// Function prototypes
+void printMenu(int ammo, int playerLives, int computerLives);
+void playerShoot(int &ammo, int &shield, int &playerLives, int &bazooka, bool &game_over, bool &riflePrimed);
+void fireRifle(int &ammo, int &computerLives, bool &game_over, bool &riflePrimed);
+void primeRifle(int &ammo, bool &riflePrimed);
+void computerShoot(int &ammo, int &computerLives, int &shield, bool &game_over, bool canUseRifle, int &playerLives);
+void setDifficulty(int &playerLives, int &computerLives, bool &canUseRifle);
+
+// Constants
+const int RELOAD = 1;
+const int SHIELD = 2;
+const int SHOOT_PISTOL = 3;
+const int SHOOT_RIFLE = 4;
+const int PRIME_RIFLE = 5;
+const int QUIT = 6;
+const int MAX_RELOADS_FOR_BAZOOKA = 7;
+
 int main() {
-    srand(time(NULL)); // seed random number generator with current time
-    int ammo = 0; // start with 0 ammo
-    int shield = 0; // no shield active
-    int lives = 5; // start with 5 lives
-    int reloads = 0; // count number of reloads
-    int bazooka = 0; // no bazooka acquired yet
-    bool game_over = false;
-    
-    while (!game_over) { // repeat until game ends
-        cout << "Enter your choice (1=reload, 2=shield, 3=shoot): ";
-        int choice;
-        cin >> choice;
-        cout << endl;
-        
-        // computer chooses randomly between shield and shoot
-        int computer_choice = rand() % 2 + 1 + 3; // 2=shield, 3=shoot 1=reload
-        if (ammo>0) {} 
-        if (choice == 1) { // reload
-            ammo++;
-            reloads++;
-            if (reloads >= 7) { // acquire bazooka after 10 reloads
-                bazooka = 1;
-                cout << "You acquired a bazooka!" << endl;
-            }
-        } else if (choice == 2) { // shield
-            shield = 1;
-            cout << "You activated your shield!" << endl;
-        } else if (choice == 3) { // shoot
-            if (shield) { // shield blocks a shot
-                shield = 0; // deactivate shield
-                cout << "You used your shield to block the computer's shot!" << endl;
-            } else if (ammo > 0) { // shoot and decrease ammo
-                ammo--;
-                cout << "You shot the computer!" << endl;
-                if (bazooka) { // bazooka wins the game
-                    cout << "You destroyed the computer with your bazooka! You win!" << endl;
-                    game_over = true;
-                }
-            } else { // out of ammo
-                cout << "You ran out of ammo!" << endl;
-            }
-        } else { // invalid choice
-            cout << "Invalid choice!" << endl;
-        }
-        
-        // computer's turn
-        if (!game_over) { // skip if game already ended
-            if (computer_choice == 2) { // computer activates shield
-                cout << "The computer activates its shield!" << endl;
-            } else if (ammo > 0) { // computer shoots if it has ammo
-                ammo--;
-                cout << "The computer shoots at you!" << endl;
-                if (shield) { // your shield blocks a shot
-                    shield = 0; // deactivate shield
-                    cout << "Your shield blocked the computer's shot!" << endl;
-                } else { // deduct one life if no shield
-                    lives--;
-                    cout << "You got hit! You have " << lives << " lives left." << endl;
-                    if (lives <= 0) { // game over if out of lives
-                        cout << "You ran out of lives! Game over!" << endl;
-                        game_over = true;
-                    }
-                }
-            } else { // computer out of ammo
-                cout << "The computer ran out of ammo!" << endl;
-            }
-        }
-    }
-    
-    return 0;
+	srand(time(NULL));
+
+	int playerLives = 0;
+	int computerLives = 0;
+	int ammo = 1;
+	int shield = 0;
+	int reloads = 0;
+	int bazooka = 0;
+	bool game_over = false;
+	bool riflePrimed = false; // Track the state of the rifle
+	bool canUseRifle = true; // Controls whether the computer can use the rifle
+
+	cout << "Let the shootout begin" << endl;
+	setDifficulty(playerLives, computerLives, canUseRifle);
+
+	while (!game_over) {
+    	printMenu(ammo, playerLives, computerLives);
+
+    	int choice;
+    	cin >> choice;
+    	cout << endl;
+
+    	switch (choice) {
+        	case RELOAD:
+            	ammo++;
+            	reloads++;
+            	if (reloads >= MAX_RELOADS_FOR_BAZOOKA) {
+                	bazooka = 1;
+                	cout << "You acquired a bazooka!" << endl;
+            	}
+            	break;
+        	case SHIELD:
+            	shield = 1;
+            	cout << "You activated your shield." << endl;
+            	break;
+        	case SHOOT_PISTOL:
+            	playerShoot(ammo, shield, playerLives, bazooka, game_over, riflePrimed);
+            	if (bazooka && !game_over) {
+                	cout << "Your opponent was vaporized in the explosion from your bazooka!" << endl;
+                	game_over = true;
+            	}
+            	break;
+        	case SHOOT_RIFLE:
+            	fireRifle(ammo, computerLives, game_over, riflePrimed);
+            	if (bazooka && !game_over) {
+                	cout << "Your opponent was vaporized in the explosion from your bazooka!" << endl;
+                	game_over = true;
+            	}
+            	break;
+        	case PRIME_RIFLE:
+            	primeRifle(ammo, riflePrimed);
+            	break;
+        	case QUIT:
+            	cout << "You decided to quit the game." << endl;
+            	game_over = true;
+            	break;
+        	default:
+            	cout << "Invalid choice!" << endl;
+    	}
+
+    	// Computer's turn
+    	if (!game_over) {
+        	computerShoot(ammo, computerLives, shield, game_over, canUseRifle, playerLives);
+        	if (playerLives <= 0) {
+            	cout << "The computer defeated you! Game over!" << endl;
+            	game_over = true;
+        	}
+    	}
+	}
+
+	return 0;
 }
+
+void setDifficulty(int &playerLives, int &computerLives, bool &canUseRifle) {
+	cout << "Select difficulty level:" << endl;
+	cout << "1. Easy (Player: 10 lives, Computer: 5 lives)" << endl;
+	cout << "2. Normal (Player: 5 lives, Computer: 5 lives)" << endl;
+	cout << "3. Hard (Player: 3 lives, Computer: 5 lives, No computer rifle)" << endl;
+
+	int difficulty;
+	cin >> difficulty;
+
+	switch (difficulty) {
+    	case 1:
+        	playerLives = 10;
+        	computerLives = 5;
+        	break;
+    	case 2:
+        	playerLives = 5;
+        	computerLives = 5;
+        	break;
+    	case 3:
+        	playerLives = 3;
+        	computerLives = 5;
+        	canUseRifle = false;
+        	break;
+    	default:
+        	cout << "Invalid difficulty selection. Exiting the game." << endl;
+        	exit(0);
+	}
+}
+
+void printMenu(int ammo, int playerLives, int computerLives) {
+	cout << "Ammo: " << ammo << " | Your Lives: " << playerLives << " | Computer Lives: " << computerLives << endl;
+	cout << "Enter your choice:" << endl;
+	cout << RELOAD << ". Reload" << endl;
+	cout << SHIELD << ". Activate Shield" << endl;
+	cout << SHOOT_PISTOL << ". Shoot Pistol" << endl;
+	cout << SHOOT_RIFLE << ". Shoot Rifle" << endl;
+	cout << PRIME_RIFLE << ". Prime Rifle" << endl;
+	cout << QUIT << ". Quit" << endl;
+}
+
+void playerShoot(int &ammo, int &shield, int &playerLives, int &bazooka, bool &game_over, bool &riflePrimed) {
+	if (ammo > 0) {
+    	ammo--;
+    	cout << "You shot your opponent!" << endl;
+	} else {
+    	cout << "You ran out of ammo!" << endl;
+	}
+}
+
+void fireRifle(int &ammo, int &computerLives, bool &game_over, bool &riflePrimed) {
+	if (riflePrimed) {
+    	if (ammo > 0) {
+        	ammo--;
+        	cout << "You fired your rifle and hit your opponent!" << endl;
+    	} else {
+        	cout << "You ran out of rifle ammo!" << endl;
+    	}
+	} else {
+    	cout << "Rifle not primed! Use 'Prime Rifle' to prime it." << endl;
+	}
+}
+
+void primeRifle(int &ammo, bool &riflePrimed) {
+	if (ammo >= 1) {
+    	ammo -= 1;
+    	riflePrimed = true;
+    	cout << "You primed your rifle. It's ready to fire!" << endl;
+	} else {
+    	cout << "Not enough ammo to prime the rifle!" << endl;
+	}
+}
+
+void computerShoot(int &ammo, int &computerLives, int &shield, bool &game_over, bool canUseRifle, int &playerLives) {
+	int computerChoice = rand() % 3 + 1; // 1: Reload, 2: Shield, 3: Shoot Pistol
+	if (canUseRifle && ammo >= 2) {
+    	computerChoice = rand() % 4 + 1; // 1: Reload, 2: Shield, 3: Shoot Pistol, 4: Shoot Rifle
+	}
+
+	switch (computerChoice) {
+    	case 1:
+        
+        	cout << "The computer reloaded." << endl;
+        	break;
+    	case 2:
+        	shield = 1;
+        	cout << "The computer activated its shield." << endl;
+        	break;
+    	case 3:
+        	if (shield) {
+            	shield = 0;
+            	cout << "The computer shot at you, but your shield blocked it!" << endl;
+        	} else {
+            	ammo--;
+            	cout << "The computer shot at you!" << endl;
+            	playerLives--;
+            	if (playerLives <= 0) {
+                	cout << "The computer defeated you! Game over!" << endl;
+                	game_over = true;
+            	}
+        	}
+        	break;
+    	case 4:
+        	if (canUseRifle) {
+            	if (shield) {
+                	shield = 0;
+                	cout << "The computer fired its rifle at you, but your shield blocked it!" << endl;
+            	} else if (ammo >= 2) {
+                	ammo -= 2;
+                	cout << "The computer fired its rifle at you!" << endl;
+                	playerLives -= 3; // Rifle does 3 damage
+                	if (playerLives <= 0) {
+                    	cout << "The computer defeated you! Game over!" << endl;
+                    	game_over = true;
+                	}
+            	} else {
+                	cout << "The computer tried to fire its rifle but ran out of ammo!" << endl;
+            	}
+        	}
+        	break;
+	}
+}
+
+
